@@ -1,6 +1,6 @@
 # NLP Text Summarizer
 
-A modern web application for text summarization using various Natural Language Processing algorithms. The application consists of a FastAPI backend and a SvelteKit frontend.
+A modern web application for text summarization using various Natural Language Processing algorithms. The application consists of a FastAPI backend and a Next.js frontend.
 
 ## Features
 
@@ -31,9 +31,9 @@ A modern web application for text summarization using various Natural Language P
   - `POST /summarize-text` - Summarizes provided text
   - `POST /summarize-url` - Extracts and summarizes content from URL
 
-### Frontend (SvelteKit)
-- **Framework**: SvelteKit with TypeScript
-- **Styling**: Tailwind CSS
+### Frontend (Next.js)
+- **Framework**: Next.js with TypeScript
+- **Styling**: Tailwind CSS and shadcn/ui components
 - **Features**: Dark mode support, responsive design, accessibility compliant
 
 ## Installation & Setup
@@ -49,32 +49,14 @@ A modern web application for text summarization using various Natural Language P
    ```bash
    cd backend
    ```
-
-2. Create a virtual environment:
-   ```bash
-   python -m venv venv
-   ```
-
-3. Activate the virtual environment:
-   - Windows: `venv\Scripts\activate`
-   - macOS/Linux: `source venv/bin/activate`
-
-4. Install dependencies:
+2. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
-
-5. Download required NLTK data:
-   ```bash
-   python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab')"
-   ```
-
-6. Start the backend server:
+3. Run the FastAPI server:
    ```bash
    uvicorn app.main:app --reload
    ```
-   
-   The API will be available at `http://127.0.0.1:8000`
 
 ### Frontend Setup
 
@@ -82,24 +64,25 @@ A modern web application for text summarization using various Natural Language P
    ```bash
    cd frontend
    ```
-
 2. Install dependencies:
    ```bash
-   npm install --legacy-peer-deps
+   npm install
    ```
-
-3. Start the development server:
+3. Run the development server:
    ```bash
    npm run dev
    ```
-   
-   The frontend will be available at `http://localhost:5173`
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Running Together
+
+Ensure both the backend and frontend servers are running simultaneously. The frontend communicates with the backend via API endpoints.
 
 ## Usage
 
 ### Web Interface
 
-1. Open your browser and go to `http://localhost:5173`
+1. Open your browser and go to `http://localhost:3000`
 2. Choose your input method:
    - **Direct Text**: Paste text directly (minimum 100 characters)
    - **URL Input**: Enter a URL to extract and summarize content
