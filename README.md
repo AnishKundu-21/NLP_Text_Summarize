@@ -49,34 +49,64 @@ A modern web application for text summarization using various Natural Language P
 - Node.js 18+
 - pip and npm
 
+---
+
 ### Backend Setup
+
 1. Navigate to the backend directory:
    ```bash
    cd backend
    ```
-2. Install dependencies:
+
+2. Create a virtual environment:
+   ```bash
+   python -m venv venv
+   ```
+
+3. Activate the virtual environment:
+
+   - **On Windows**:
+     ```bash
+     venv\Scripts\activate
+     ```
+
+   - **On macOS/Linux**:
+     ```bash
+     source venv/bin/activate
+     ```
+
+4. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
-3. Run the FastAPI server:
+
+5. Run the FastAPI server:
    ```bash
    uvicorn app.main:app --reload
    ```
 
+---
+
 ### Frontend Setup
+
 1. Navigate to the frontend directory:
    ```bash
    cd frontend
    ```
+
 2. Install dependencies:
    ```bash
    npm install
    ```
+
 3. Run the development server:
    ```bash
    npm run dev
    ```
+
 4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
 
 ### Running Together
 Ensure both the backend and frontend servers are running simultaneously. The frontend communicates with the backend via API endpoints.
