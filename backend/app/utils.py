@@ -1,0 +1,158 @@
+import re
+import requests
+from bs4 import BeautifulSoup
+from collections import Counter
+from nltk.tokenize import sent_tokenize, word_tokenize
+from sklearn.feature_extraction.text import TfidfVectorizer
+import networkx as nx
+from transformers import pipeline
+
+# Load Hugging Face summarization model
+hugging_face_summarizer = pipeline("summarization")
+
+# Summarization Algorithms
+def summarize_text(text: str, algorithm: str, summary_length: str, compression_ratio: int) -> str:
+    """
+    Summarize the given text using the specified algorithm.
+    """
+    if algorithm == "Frequency-Based":
+        return frequency_based_summarization(text, compression_ratio)
+    elif algorithm == "TF-IDF":
+        return tfidf_summarization(text, compression_ratio)
+    elif algorithm == "TextRank":
+        return textrank_summarization(text, compression_ratio)
+    elif algorithm == "Position-Based":
+        return position_based_summarization(text, compression_ratio)
+    elif algorithm == "Hugging Face":
+        return hugging_face_summarization(text, summary_length)
+    else:
+        raise ValueError("Invalid algorithm specified.")
+
+def frequency_based_summarization(text: str, compression_ratio: int) -> str:
+    """
+    Summarize text using a frequency-based approach.
+    """
+    words = word_tokenize(text.lower())
+    word_frequencies = Counter(words)
+    sentences = sent_tokenize(text)
+    ranked_sentences = sorted(sentences, key=lambda s: sum(word_frequencies[w] for w in word_tokenize(s.lower())), reverse=True)
+    num_sentences = max(1, len(sentences) * compression_ratio // 100)
+    return " ".join(ranked_sentences[:num_sentences])
+
+def tfidf_summarization(text: str, compression_ratio: int) -> str:
+    """
+    Summarize text using TF-IDF.
+    """
+    sentences = sent_tokenize(text)
+    if len(sentences) <= 1:
+        return text
+    
+    vectorizer = TfidfVectorizer()
+    tfidf_matrix = vectorizer.fit_transform(sentences)
+    scores = tfidf_matrix.sum(axis=1).A1
+    ranked_sentences = [sentences[i] for i in scores.argsort()[::-1]]
+    num_sentences = max(1, len(sentences) * compression_ratio // 100)
+    return " ".join(ranked_sentences[:num_sentences])
+
+def textrank_summarization(text: str, compression_ratio: int) -> str:
+    """
+    Summarize text using TextRank.
+    """
+    sentences = sent_tokenize(text)
+    if len(sentences) <= 1:
+        return text
+    
+    sentence_vectors = {i: word_tokenize(sent.lower()) for i, sent in enumerate(sentences)}
+    graph = nx.Graph()
+    
+    # Add all nodes first
+    for i in range(len(sentences)):
+        graph.add_node(i)
+    
+    # Add edges with weights
+    for i, sent1 in sentence_vectors.items():
+        for j, sent2 in sentence_vectors.items():
+            if i != j:
+                similarity = len(set(sent1) & set(sent2))
+                if similarity > 0:  # Only add edge if there's similarity
+                    graph.add_edge(i, j, weight=similarity)
+    
+    # Check if graph has edges for PageRank
+    if graph.number_of_edges() == 0:
+        # Fallback to position-based if no connections
+        num_sentences = max(1, len(sentences) * compression_ratio // 100)
+        return " ".join(sentences[:num_sentences])
+    
+    pagerank_scores = nx.pagerank(graph)
+    ranked_sentences = sorted(graph.nodes, key=lambda n: pagerank_scores[n], reverse=True)
+    num_sentences = max(1, len(sentences) * compression_ratio // 100)
+    return " ".join([sentences[i] for i in ranked_sentences[:num_sentences]])
+
+def position_based_summarization(text: str, compression_ratio: int) -> str:
+    """
+    Summarize text using a position-based approach (first few sentences).
+    """
+    sentences = sent_tokenize(text)
+    num_sentences = max(1, len(sentences) * compression_ratio // 100)
+    return " ".join(sentences[:num_sentences])
+
+def hugging_face_summarization(text: str, summary_length: str) -> str:
+    """
+    Summarize text using Hugging Face's pre-trained models.
+    """
+    # Check if text is too short for summarization
+    if len(text.split()) < 30:
+        return text
+    
+    max_length = {"Short": 50, "Medium": 100, "Long": 200}.get(summary_length, 100)
+    min_length = min(30, max_length // 3)  # Ensure min_length is not too high
+    
+    try:
+        summary = hugging_face_summarizer(text, max_length=max_length, min_length=min_length, do_sample=False)
+        return summary[0]["summary_text"]
+    except Exception as e:
+        # Fallback to first few sentences if Hugging Face fails
+        sentences = sent_tokenize(text)
+        num_sentences = max(1, min(3, len(sentences)))
+        return " ".join(sentences[:num_sentences])
+
+# URL Content Extraction
+def extract_content_from_url(url: str) -> str:
+    """
+    Extract content from the given URL.
+    """
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.content, "html.parser")
+        
+        # Try to find main content areas first
+        content_areas = soup.find_all(['article', 'main', 'div'], class_=['content', 'article', 'post', 'main'])
+        if content_areas:
+            paragraphs = []
+            for area in content_areas:
+                paragraphs.extend(area.find_all("p"))
+        else:
+            paragraphs = soup.find_all("p")
+        
+        content = " ".join([p.get_text().strip() for p in paragraphs if p.get_text().strip()])
+        
+        if not content:
+            raise ValueError("No readable content found on the webpage")
+        
+        return content
+    except requests.exceptions.RequestException as e:
+        raise ValueError(f"Failed to fetch URL: {str(e)}")
+    except Exception as e:
+        raise ValueError(f"Failed to extract content: {str(e)}")
+
+# Sample Text Retrieval
+def get_sample_text() -> str:
+    """
+    Return pre-loaded sample text for testing.
+    """
+    return (
+        "Natural language processing (NLP) is a subfield of linguistics, computer science, "
+        "and artificial intelligence concerned with the interactions between computers and human language, "
+        "in particular how to program computers to process and analyze large amounts of natural language data."
+    )
