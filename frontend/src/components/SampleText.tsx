@@ -3,10 +3,11 @@
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { View } from "@/types";
+import { View, Entity } from "@/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Settings, { SettingsState } from "./Settings";
 import { getSampleText, summarizeText } from "@/lib/api";
+import { Badge } from "@/components/ui/badge";
 
 export default function SampleText({
 	setView,
@@ -22,6 +23,7 @@ export default function SampleText({
 	const [sampleTexts, setSampleTexts] = useState<{ id: string; title: string; text: string }[]>([]);
 	const [selectedText, setSelectedText] = useState("");
 	const [summary, setSummary] = useState("");
+	const [entities, setEntities] = useState<Entity[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -49,12 +51,16 @@ export default function SampleText({
 		setIsLoading(true);
 		setError(null);
 		setSummary("");
+    	setEntities([]);
 		try {
 			const response = await summarizeText({
 				text: selectedText,
 				...settings,
 			});
 			setSummary(response.summary);
+      if (response.entities) {
+        setEntities(response.entities);
+      }
       onNewSummary(response.summary);
 		} catch (err: any) {
 			setError(err.message || "An unknown error occurred.");
@@ -62,6 +68,20 @@ export default function SampleText({
 			setIsLoading(false);
 		}
 	};
+
+  const getBadgeVariant = (label: string) => {
+    switch (label) {
+      case 'PERSON':
+        return 'default';
+      case 'ORG':
+        return 'secondary';
+      case 'GPE':
+      case 'LOC':
+        return 'destructive';
+      default:
+        return 'outline';
+    }
+  };
 
 	return (
 		<Card>
@@ -99,10 +119,22 @@ export default function SampleText({
 				</div>
 			)}
 			{summary && (
-				<div className="p-4 border-t border-gray-700">
-					<h3 className="text-lg font-semibold">Summary</h3>
-					<p className="mt-2">{summary}</p>
-				</div>
+        <div className="p-4 border-t border-gray-700">
+          <h3 className="text-lg font-semibold">Summary</h3>
+          <p className="mt-2">{summary}</p>
+          {entities.length > 0 && (
+            <div className="mt-4">
+              <h4 className="text-md font-semibold">Named Entities</h4>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {entities.map((entity, index) => (
+                  <Badge key={index} variant={getBadgeVariant(entity.label)}>
+                    {entity.text} <span className="text-xs opacity-75 ml-2">{entity.label}</span>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
 			)}
 		</Card>
 	);

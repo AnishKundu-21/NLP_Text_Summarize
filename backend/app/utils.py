@@ -1,5 +1,3 @@
-# backend/app/utils.py
-
 import re
 import requests
 from bs4 import BeautifulSoup
@@ -9,27 +7,48 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import networkx as nx
 from transformers import pipeline
 import trafilatura
+import spacy
+from typing import Dict, List
 
-# Load Hugging Face summarization model
+# Load models at startup
 hugging_face_summarizer = pipeline("summarization")
+nlp = spacy.load("en_core_web_sm")
 
-# Summarization Algorithms
-def summarize_text(text: str, algorithm: str, summary_length: str, compression_ratio: int) -> str:
+
+def extract_entities(text: str) -> List[Dict[str, str]]:
     """
-    Summarize the given text using the specified algorithm.
+    Extracts named entities from the text using spaCy.
     """
+    doc = nlp(text)
+    entities = []
+    for ent in doc.ents:
+        entities.append({"text": ent.text, "label": ent.label_})
+    return entities
+
+
+def summarize_text(text: str, algorithm: str, summary_length: str, compression_ratio: int, recognize_entities: bool) -> dict:
+    """
+    Summarize the given text and optionally extract entities from the summary.
+    """
+    summary = ""
     if algorithm == "Frequency-Based":
-        return frequency_based_summarization(text, compression_ratio)
+        summary = frequency_based_summarization(text, compression_ratio)
     elif algorithm == "TF-IDF":
-        return tfidf_summarization(text, compression_ratio)
+        summary = tfidf_summarization(text, compression_ratio)
     elif algorithm == "TextRank":
-        return textrank_summarization(text, compression_ratio)
+        summary = textrank_summarization(text, compression_ratio)
     elif algorithm == "Position-Based":
-        return position_based_summarization(text, compression_ratio)
+        summary = position_based_summarization(text, compression_ratio)
     elif algorithm == "Hugging Face":
-        return hugging_face_summarization(text, summary_length)
+        summary = hugging_face_summarization(text, summary_length)
     else:
         raise ValueError("Invalid algorithm specified.")
+
+    result = {"summary": summary}
+    if recognize_entities:
+        result["entities"] = extract_entities(summary)
+
+    return result
 
 def frequency_based_summarization(text: str, compression_ratio: int) -> str:
     """

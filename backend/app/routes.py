@@ -1,6 +1,7 @@
 # app/routes.py
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, HttpUrl
+from typing import Optional
 
 from app.utils import (
     summarize_text,
@@ -17,6 +18,7 @@ class SummarizeTextRequest(BaseModel):
     algorithm: str
     summary_length: str
     compression_ratio: int
+    recognize_entities: Optional[bool] = False
 
 
 class SummarizeURLRequest(BaseModel):
@@ -24,14 +26,14 @@ class SummarizeURLRequest(BaseModel):
     algorithm: str
     summary_length: str
     compression_ratio: int
+    recognize_entities: Optional[bool] = False
 
 
 # ---------- endpoints ---------- #
 @router.post("/summarize-text")
 async def summarize_text_endpoint(payload: SummarizeTextRequest):
     """
-    Summarize the given text using the specified algorithm,
-    summary length, and compression ratio.
+    Summarize the given text and optionally recognize entities.
     """
     if len(payload.text) < 100:
         raise HTTPException(
@@ -39,13 +41,14 @@ async def summarize_text_endpoint(payload: SummarizeTextRequest):
         )
 
     try:
-        summary = summarize_text(
+        result = summarize_text(
             payload.text,
             payload.algorithm,
             payload.summary_length,
             payload.compression_ratio,
+            payload.recognize_entities,
         )
-        return {"summary": summary}
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to summarize text: {e}")
 
@@ -53,17 +56,18 @@ async def summarize_text_endpoint(payload: SummarizeTextRequest):
 @router.post("/summarize-url")
 async def summarize_url_endpoint(payload: SummarizeURLRequest):
     """
-    Extract content from the given URL and summarize it.
+    Extract content from a URL, summarize it, and optionally recognize entities.
     """
     try:
         content = extract_content_from_url(str(payload.url))
-        summary = summarize_text(
+        result = summarize_text(
             content,
             payload.algorithm,
             payload.summary_length,
             payload.compression_ratio,
+            payload.recognize_entities,
         )
-        return {"summary": summary}
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to summarize URL: {e}")
 

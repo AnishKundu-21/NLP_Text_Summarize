@@ -22,7 +22,8 @@ export default function Home() {
   const [settings, setSettings] = useState<SettingsState>({
     algorithm: 'Frequency-Based',
     summary_length: 'Medium',
-    compression_ratio: 40,
+    compression_ratio: 45,
+    recognize_entities: false,
   });
   const [summaryHistory, setSummaryHistory] = useState<HistoryItem[]>([]);
 
