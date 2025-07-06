@@ -19,6 +19,7 @@ class SummarizeTextRequest(BaseModel):
     summary_length: str
     compression_ratio: int
     recognize_entities: Optional[bool] = False
+    analyze_sentiment: Optional[bool] = False
 
 
 class SummarizeURLRequest(BaseModel):
@@ -27,13 +28,14 @@ class SummarizeURLRequest(BaseModel):
     summary_length: str
     compression_ratio: int
     recognize_entities: Optional[bool] = False
+    analyze_sentiment: Optional[bool] = False
 
 
 # ---------- endpoints ---------- #
 @router.post("/summarize-text")
 async def summarize_text_endpoint(payload: SummarizeTextRequest):
     """
-    Summarize the given text and optionally recognize entities.
+    Summarize the given text and optionally perform other NLP tasks.
     """
     if len(payload.text) < 100:
         raise HTTPException(
@@ -47,6 +49,7 @@ async def summarize_text_endpoint(payload: SummarizeTextRequest):
             payload.summary_length,
             payload.compression_ratio,
             payload.recognize_entities,
+            payload.analyze_sentiment,
         )
         return result
     except Exception as e:
@@ -56,7 +59,7 @@ async def summarize_text_endpoint(payload: SummarizeTextRequest):
 @router.post("/summarize-url")
 async def summarize_url_endpoint(payload: SummarizeURLRequest):
     """
-    Extract content from a URL, summarize it, and optionally recognize entities.
+    Extract content from a URL, summarize it, and optionally perform other NLP tasks.
     """
     try:
         content = extract_content_from_url(str(payload.url))
@@ -66,6 +69,7 @@ async def summarize_url_endpoint(payload: SummarizeURLRequest):
             payload.summary_length,
             payload.compression_ratio,
             payload.recognize_entities,
+            payload.analyze_sentiment,
         )
         return result
     except Exception as e:

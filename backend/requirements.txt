@@ -9,3 +9,4 @@ requests==2.32.4
 beautifulsoup4==4.12.2
 trafilatura==1.6.1
 spacy==3.7.2
+vaderSentiment==3.3.2

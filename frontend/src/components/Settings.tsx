@@ -12,6 +12,7 @@ export interface SettingsState {
   summary_length: string;
   compression_ratio: number;
   recognize_entities: boolean;
+  analyze_sentiment: boolean;
 }
 
 interface SettingsProps {
@@ -115,13 +116,23 @@ export default function Settings({ settings, onSettingsChange }: SettingsProps) 
             </div>
           )}
         </div>
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="recognize-entities"
-            checked={settings.recognize_entities}
-            onCheckedChange={(checked: boolean) => onSettingsChange({ ...settings, recognize_entities: checked })}
-          />
-          <Label htmlFor="recognize-entities">Recognize Named Entities</Label>
+        <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="recognize-entities"
+                checked={settings.recognize_entities}
+                onCheckedChange={(checked: boolean) => onSettingsChange({ ...settings, recognize_entities: checked })}
+              />
+              <Label htmlFor="recognize-entities">Recognize Named Entities</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+                <Switch
+                    id="analyze-sentiment"
+                    checked={settings.analyze_sentiment}
+                    onCheckedChange={(checked: boolean) => onSettingsChange({ ...settings, analyze_sentiment: checked })}
+                />
+                <Label htmlFor="analyze-sentiment">Analyze Sentiment</Label>
+            </div>
         </div>
       </div>
     </TooltipProvider>

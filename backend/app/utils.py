@@ -1,3 +1,5 @@
+# backend/app/utils.py
+
 import re
 import requests
 from bs4 import BeautifulSoup
@@ -8,11 +10,28 @@ import networkx as nx
 from transformers import pipeline
 import trafilatura
 import spacy
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from typing import Dict, List
 
 # Load models at startup
 hugging_face_summarizer = pipeline("summarization")
 nlp = spacy.load("en_core_web_sm")
+sentiment_analyzer = SentimentIntensityAnalyzer()
+
+
+def get_sentiment(text: str) -> dict:
+    """
+    Analyzes the sentiment of the text using VADER.
+    """
+    scores = sentiment_analyzer.polarity_scores(text)
+    # Classify sentiment based on the compound score
+    if scores['compound'] >= 0.05:
+        sentiment = "Positive"
+    elif scores['compound'] <= -0.05:
+        sentiment = "Negative"
+    else:
+        sentiment = "Neutral"
+    return {"label": sentiment, "score": scores['compound']}
 
 
 def extract_entities(text: str) -> List[Dict[str, str]]:
@@ -26,9 +45,9 @@ def extract_entities(text: str) -> List[Dict[str, str]]:
     return entities
 
 
-def summarize_text(text: str, algorithm: str, summary_length: str, compression_ratio: int, recognize_entities: bool) -> dict:
+def summarize_text(text: str, algorithm: str, summary_length: str, compression_ratio: int, recognize_entities: bool, analyze_sentiment: bool) -> dict:
     """
-    Summarize the given text and optionally extract entities from the summary.
+    Summarize the given text and optionally perform other NLP tasks.
     """
     summary = ""
     if algorithm == "Frequency-Based":
@@ -47,6 +66,8 @@ def summarize_text(text: str, algorithm: str, summary_length: str, compression_r
     result = {"summary": summary}
     if recognize_entities:
         result["entities"] = extract_entities(summary)
+    if analyze_sentiment:
+        result["sentiment"] = get_sentiment(text) # Analyze sentiment of the original text
 
     return result
 
@@ -163,14 +184,12 @@ def extract_content_from_url(url: str) -> str:
         downloaded = trafilatura.fetch_url(url)
         if downloaded is None:
             raise ValueError("Failed to download the URL content.")
-        
-        # The 'include_comments=False' and 'include_tables=False' are good defaults
-        # to get cleaner article text.
+
         content = trafilatura.extract(downloaded, include_comments=False, include_tables=False)
-        
+
         if not content:
             raise ValueError("No readable content found on the webpage using trafilatura.")
-            
+
         return content
     except Exception as e:
         # Fallback or detailed error

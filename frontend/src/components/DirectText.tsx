@@ -4,11 +4,12 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { View, Entity } from "@/types";
+import { View, Entity, Sentiment } from "@/types";
 import { Dispatch, SetStateAction } from "react";
 import Settings, { SettingsState } from "./Settings";
 import { summarizeText } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
+import { Smile, Frown, Meh } from "lucide-react";
 
 export default function DirectText({
   setView,
@@ -24,6 +25,7 @@ export default function DirectText({
   const [text, setText] = useState("");
   const [summary, setSummary] = useState("");
   const [entities, setEntities] = useState<Entity[]>([]);
+  const [sentiment, setSentiment] = useState<Sentiment | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,6 +35,7 @@ export default function DirectText({
     setError(null);
     setSummary("");
     setEntities([]);
+    setSentiment(null);
     try {
       const response = await summarizeText({
         text,
@@ -41,6 +44,9 @@ export default function DirectText({
       setSummary(response.summary);
       if (response.entities) {
         setEntities(response.entities);
+      }
+      if (response.sentiment) {
+        setSentiment(response.sentiment);
       }
       onNewSummary(response.summary);
     } catch (err: any) {
@@ -62,6 +68,30 @@ export default function DirectText({
       default:
         return 'outline';
     }
+  };
+
+  const renderSentiment = () => {
+    if (!sentiment) return null;
+
+    const sentimentIcon =
+      sentiment.label === 'Positive' ? (
+        <Smile className="w-5 h-5 text-green-500" />
+      ) : sentiment.label === 'Negative' ? (
+        <Frown className="w-5 h-5 text-red-500" />
+      ) : (
+        <Meh className="w-5 h-5 text-yellow-500" />
+      );
+
+    return (
+      <div className="mt-4">
+        <h4 className="text-md font-semibold">Sentiment</h4>
+        <div className="flex items-center gap-2 mt-2">
+          {sentimentIcon}
+          <span className="font-medium">{sentiment.label}</span>
+          <span className="text-sm text-gray-400">(Score: {sentiment.score.toFixed(2)})</span>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -103,6 +133,7 @@ export default function DirectText({
         <div className="p-4 border-t border-gray-700">
           <h3 className="text-lg font-semibold">Summary</h3>
           <p className="mt-2">{summary}</p>
+          {renderSentiment()}
           {entities.length > 0 && (
             <div className="mt-4">
               <h4 className="text-md font-semibold">Named Entities</h4>

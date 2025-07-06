@@ -5,12 +5,18 @@ export interface Entity {
   label: string;
 }
 
+export interface Sentiment {
+  label: string;
+  score: number;
+}
+
 export interface SummarizeTextRequest {
   text: string;
   algorithm: string;
   summary_length: string;
   compression_ratio: number;
   recognize_entities?: boolean;
+  analyze_sentiment?: boolean;
 }
 
 export interface SummarizeURLRequest {
@@ -19,11 +25,13 @@ export interface SummarizeURLRequest {
   summary_length: string;
   compression_ratio: number;
   recognize_entities?: boolean;
+  analyze_sentiment?: boolean;
 }
 
 export interface SummarizeResponse {
   summary: string;
   entities?: Entity[];
+  sentiment?: Sentiment;
 }
 
 export interface SampleTextResponse {
