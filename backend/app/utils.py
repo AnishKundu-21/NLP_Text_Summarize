@@ -8,6 +8,7 @@ from nltk.tokenize import sent_tokenize, word_tokenize
 from sklearn.feature_extraction.text import TfidfVectorizer
 import networkx as nx
 from transformers import pipeline
+import trafilatura
 
 # Load Hugging Face summarization model
 hugging_face_summarizer = pipeline("summarization")
@@ -137,32 +138,25 @@ def hugging_face_summarization(text: str, summary_length: str) -> str:
 # URL Content Extraction
 def extract_content_from_url(url: str) -> str:
     """
-    Extract content from the given URL.
+    Extract main content from the given URL using trafilatura.
     """
     try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.content, "html.parser")
-
-        # Try to find main content areas first
-        content_areas = soup.find_all(['article', 'main', 'div'], class_=['content', 'article', 'post', 'main'])
-        if content_areas:
-            paragraphs = []
-            for area in content_areas:
-                paragraphs.extend(area.find_all("p"))
-        else:
-            paragraphs = soup.find_all("p")
-
-        content = " ".join([p.get_text().strip() for p in paragraphs if p.get_text().strip()])
-
+        downloaded = trafilatura.fetch_url(url)
+        if downloaded is None:
+            raise ValueError("Failed to download the URL content.")
+        
+        # The 'include_comments=False' and 'include_tables=False' are good defaults
+        # to get cleaner article text.
+        content = trafilatura.extract(downloaded, include_comments=False, include_tables=False)
+        
         if not content:
-            raise ValueError("No readable content found on the webpage")
-
+            raise ValueError("No readable content found on the webpage using trafilatura.")
+            
         return content
-    except requests.exceptions.RequestException as e:
-        raise ValueError(f"Failed to fetch URL: {str(e)}")
     except Exception as e:
+        # Fallback or detailed error
         raise ValueError(f"Failed to extract content: {str(e)}")
+
 
 # Sample Text Retrieval
 def get_sample_text() -> str:

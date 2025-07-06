@@ -7,3 +7,4 @@ transformers==4.50.0
 torch==2.7.1
 requests==2.32.4
 beautifulsoup4==4.12.2
+trafilatura==1.6.1
