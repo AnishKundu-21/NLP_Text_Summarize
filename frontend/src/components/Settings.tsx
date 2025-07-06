@@ -25,7 +25,9 @@ const algorithmInfo: { [key: string]: string } = {
   "TF-IDF": "Scores sentences based on how important words are to the document.",
   "TextRank": "A graph-based algorithm that ranks sentences by importance, similar to Google's PageRank.",
   "Position-Based": "Selects the first few sentences of the text, assuming the most important information is at the beginning.",
-  "Hugging Face": "Uses a pre-trained AI model to generate a new, abstractive summary.",
+  "Hugging Face (Default)": "Uses a pre-trained AI model (DistilBART) to generate a new, abstractive summary.",
+  "Hugging Face (BART)": "Uses the BART (large-cnn) model for more detailed abstractive summarization.",
+  "Hugging Face (T5)": "Uses the T5 model, which is excellent for a wide range of NLP tasks including summarization.",
 };
 
 export default function Settings({ settings, onSettingsChange }: SettingsProps) {
@@ -42,7 +44,7 @@ export default function Settings({ settings, onSettingsChange }: SettingsProps) 
                   <Info className="w-4 h-4 text-gray-400 cursor-pointer" />
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{algorithmInfo[settings.algorithm]}</p>
+                  <p>{algorithmInfo[settings.algorithm] || "Select an algorithm to see its description."}</p>
                 </TooltipContent>
               </Tooltip>
             </div>
@@ -58,11 +60,13 @@ export default function Settings({ settings, onSettingsChange }: SettingsProps) 
                 <SelectItem value="TF-IDF">TF-IDF</SelectItem>
                 <SelectItem value="TextRank">TextRank</SelectItem>
                 <SelectItem value="Position-Based">Position-Based</SelectItem>
-                <SelectItem value="Hugging Face">Hugging Face</SelectItem>
+                <SelectItem value="Hugging Face (Default)">Hugging Face (Default)</SelectItem>
+                <SelectItem value="Hugging Face (BART)">Hugging Face (BART)</SelectItem>
+                <SelectItem value="Hugging Face (T5)">Hugging Face (T5)</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          {settings.algorithm === 'Hugging Face' ? (
+          {settings.algorithm.includes('Hugging Face') ? (
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Label htmlFor="summary-length">Summary Length</Label>
@@ -116,7 +120,8 @@ export default function Settings({ settings, onSettingsChange }: SettingsProps) 
             </div>
           )}
         </div>
-        <div className="space-y-4">
+        <div className="space-y-4 pt-4">
+            <h4 className="text-md font-semibold">Additional Analysis</h4>
             <div className="flex items-center space-x-2">
               <Switch
                 id="recognize-entities"

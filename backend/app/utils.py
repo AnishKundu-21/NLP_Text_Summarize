@@ -15,6 +15,8 @@ from typing import Dict, List
 
 # Load models at startup
 hugging_face_summarizer = pipeline("summarization")
+bart_summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+t5_summarizer = pipeline("summarization", model="t5-base")
 nlp = spacy.load("en_core_web_sm")
 sentiment_analyzer = SentimentIntensityAnalyzer()
 
@@ -58,8 +60,8 @@ def summarize_text(text: str, algorithm: str, summary_length: str, compression_r
         summary = textrank_summarization(text, compression_ratio)
     elif algorithm == "Position-Based":
         summary = position_based_summarization(text, compression_ratio)
-    elif algorithm == "Hugging Face":
-        summary = hugging_face_summarization(text, summary_length)
+    elif "Hugging Face" in algorithm:
+        summary = hugging_face_summarization(text, summary_length, algorithm)
     else:
         raise ValueError("Invalid algorithm specified.")
 
@@ -67,7 +69,7 @@ def summarize_text(text: str, algorithm: str, summary_length: str, compression_r
     if recognize_entities:
         result["entities"] = extract_entities(summary)
     if analyze_sentiment:
-        result["sentiment"] = get_sentiment(text) # Analyze sentiment of the original text
+        result["sentiment"] = get_sentiment(text)
 
     return result
 
@@ -148,7 +150,7 @@ def position_based_summarization(text: str, compression_ratio: int) -> str:
         return " ".join(sentences)
     return " ".join(sentences[:num_sentences])
 
-def hugging_face_summarization(text: str, summary_length: str) -> str:
+def hugging_face_summarization(text: str, summary_length: str, algorithm: str) -> str:
     """
     Summarize text using Hugging Face's pre-trained models.
     """
@@ -167,7 +169,14 @@ def hugging_face_summarization(text: str, summary_length: str) -> str:
         max_length = 150
 
     try:
-        summary = hugging_face_summarizer(text, max_length=max_length, min_length=min_length, do_sample=False)
+        if "BART" in algorithm:
+            summarizer = bart_summarizer
+        elif "T5" in algorithm:
+            summarizer = t5_summarizer
+        else:
+            summarizer = hugging_face_summarizer
+            
+        summary = summarizer(text, max_length=max_length, min_length=min_length, do_sample=False)
         return summary[0]["summary_text"]
     except Exception as e:
         # Fallback to first few sentences if Hugging Face fails
