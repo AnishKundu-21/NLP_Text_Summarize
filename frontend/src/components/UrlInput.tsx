@@ -13,10 +13,12 @@ export default function UrlInput({
   setView,
   settings,
   onSettingsChange,
+  onNewSummary,
 }: {
   setView: Dispatch<SetStateAction<View>>;
   settings: SettingsState;
   onSettingsChange: (settings: SettingsState) => void;
+  onNewSummary: (summary: string) => void;
 }) {
   const [url, setUrl] = useState("");
   const [summary, setSummary] = useState("");
@@ -34,6 +36,7 @@ export default function UrlInput({
         ...settings,
       });
       setSummary(response.summary);
+      onNewSummary(response.summary);
     } catch (err: any) {
       setError(err.message || "An unknown error occurred.");
     } finally {

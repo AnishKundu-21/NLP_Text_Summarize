@@ -13,10 +13,12 @@ export default function DirectText({
   setView,
   settings,
   onSettingsChange,
+  onNewSummary,
 }: {
   setView: Dispatch<SetStateAction<View>>;
   settings: SettingsState;
   onSettingsChange: (settings: SettingsState) => void;
+  onNewSummary: (summary: string) => void;
 }) {
   const [text, setText] = useState("");
   const [summary, setSummary] = useState("");
@@ -34,6 +36,7 @@ export default function DirectText({
         ...settings,
       });
       setSummary(response.summary);
+      onNewSummary(response.summary);
     } catch (err: any) {
       setError(err.message || "An unknown error occurred.");
     } finally {

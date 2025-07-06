@@ -12,10 +12,12 @@ export default function SampleText({
 	setView,
 	settings,
 	onSettingsChange,
+  onNewSummary,
 }: {
 	setView: Dispatch<SetStateAction<View>>;
 	settings: SettingsState;
 	onSettingsChange: (settings: SettingsState) => void;
+  onNewSummary: (summary: string) => void;
 }) {
 	const [sampleTexts, setSampleTexts] = useState<{ id: string; title: string; text: string }[]>([]);
 	const [selectedText, setSelectedText] = useState("");
@@ -53,6 +55,7 @@ export default function SampleText({
 				...settings,
 			});
 			setSummary(response.summary);
+      onNewSummary(response.summary);
 		} catch (err: any) {
 			setError(err.message || "An unknown error occurred.");
 		} finally {

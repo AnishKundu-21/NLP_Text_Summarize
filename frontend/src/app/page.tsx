@@ -11,6 +11,13 @@ import { Card } from '@/components/Card';
 import Settings, { SettingsState } from '@/components/Settings';
 import { View } from '@/types';
 
+// Define the shape of a history item
+interface HistoryItem {
+  id: string;
+  text: string;
+  timestamp: Date;
+}
+
 export default function Home() {
   const [view, setView] = useState<View>('main');
   const [settings, setSettings] = useState<SettingsState>({
@@ -18,15 +25,25 @@ export default function Home() {
     summary_length: 'Medium',
     compression_ratio: 40,
   });
+  const [summaryHistory, setSummaryHistory] = useState<HistoryItem[]>([]);
+
+  const handleNewSummary = (summaryText: string) => {
+    const newSummary: HistoryItem = {
+      id: new Date().toISOString(),
+      text: summaryText,
+      timestamp: new Date(),
+    };
+    setSummaryHistory([newSummary, ...summaryHistory]);
+  };
 
   const renderView = () => {
     switch (view) {
       case 'direct':
-        return <DirectText setView={setView} settings={settings} onSettingsChange={setSettings} />;
+        return <DirectText setView={setView} settings={settings} onSettingsChange={setSettings} onNewSummary={handleNewSummary} />;
       case 'url':
-        return <UrlInput setView={setView} settings={settings} onSettingsChange={setSettings} />;
+        return <UrlInput setView={setView} settings={settings} onSettingsChange={setSettings} onNewSummary={handleNewSummary} />;
       case 'sample':
-        return <SampleText setView={setView} settings={settings} onSettingsChange={setSettings} />;
+        return <SampleText setView={setView} settings={settings} onSettingsChange={setSettings} onNewSummary={handleNewSummary} />;
       default:
         return renderMainPage();
     }
@@ -41,26 +58,26 @@ export default function Home() {
         </p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-        <Card 
-          title="Direct Text" 
-          description="Paste or type your text directly" 
-          icon={<FileText className="w-12 h-12 text-teal-400" />} 
+        <Card
+          title="Direct Text"
+          description="Paste or type your text directly"
+          icon={<FileText className="w-12 h-12 text-teal-400" />}
           onClick={() => setView('direct')}
         />
-        <Card 
-          title="URL Input" 
-          description="Extract text from web pages" 
-          icon={<Globe className="w-12 h-12 text-teal-400" />} 
+        <Card
+          title="URL Input"
+          description="Extract text from web pages"
+          icon={<Globe className="w-12 h-12 text-teal-400" />}
           onClick={() => setView('url')}
         />
-        <Card 
-          title="Sample Text" 
-          description="Try with pre-loaded examples" 
-          icon={<BookText className="w-12 h-12 text-teal-400" />} 
+        <Card
+          title="Sample Text"
+          description="Try with pre-loaded examples"
+          icon={<BookText className="w-12 h-12 text-teal-400" />}
           onClick={() => setView('sample')}
         />
       </div>
-      <SummaryHistory />
+      <SummaryHistory history={summaryHistory} />
     </div>
   );
 
