@@ -11,7 +11,6 @@ import { Card } from '@/components/Card';
 import Settings, { SettingsState } from '@/components/Settings';
 import { View } from '@/types';
 
-// Define the shape of a history item
 interface HistoryItem {
   id: string;
   text: string;

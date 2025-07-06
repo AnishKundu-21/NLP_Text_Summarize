@@ -1,3 +1,5 @@
+# backend/app/utils.py
+
 import re
 import requests
 from bs4 import BeautifulSoup
@@ -35,8 +37,10 @@ def frequency_based_summarization(text: str, compression_ratio: int) -> str:
     words = word_tokenize(text.lower())
     word_frequencies = Counter(words)
     sentences = sent_tokenize(text)
-    ranked_sentences = sorted(sentences, key=lambda s: sum(word_frequencies[w] for w in word_tokenize(s.lower())), reverse=True)
     num_sentences = max(1, len(sentences) * compression_ratio // 100)
+    if num_sentences >= len(sentences):
+        return " ".join(sentences)
+    ranked_sentences = sorted(sentences, key=lambda s: sum(word_frequencies[w] for w in word_tokenize(s.lower())), reverse=True)
     return " ".join(ranked_sentences[:num_sentences])
 
 def tfidf_summarization(text: str, compression_ratio: int) -> str:
@@ -46,12 +50,15 @@ def tfidf_summarization(text: str, compression_ratio: int) -> str:
     sentences = sent_tokenize(text)
     if len(sentences) <= 1:
         return text
-    
+
+    num_sentences = max(1, len(sentences) * compression_ratio // 100)
+    if num_sentences >= len(sentences):
+        return " ".join(sentences)
+
     vectorizer = TfidfVectorizer()
     tfidf_matrix = vectorizer.fit_transform(sentences)
     scores = tfidf_matrix.sum(axis=1).A1
     ranked_sentences = [sentences[i] for i in scores.argsort()[::-1]]
-    num_sentences = max(1, len(sentences) * compression_ratio // 100)
     return " ".join(ranked_sentences[:num_sentences])
 
 def textrank_summarization(text: str, compression_ratio: int) -> str:
@@ -61,14 +68,18 @@ def textrank_summarization(text: str, compression_ratio: int) -> str:
     sentences = sent_tokenize(text)
     if len(sentences) <= 1:
         return text
-    
+
+    num_sentences = max(1, len(sentences) * compression_ratio // 100)
+    if num_sentences >= len(sentences):
+        return " ".join(sentences)
+
     sentence_vectors = {i: word_tokenize(sent.lower()) for i, sent in enumerate(sentences)}
     graph = nx.Graph()
-    
+
     # Add all nodes first
     for i in range(len(sentences)):
         graph.add_node(i)
-    
+
     # Add edges with weights
     for i, sent1 in sentence_vectors.items():
         for j, sent2 in sentence_vectors.items():
@@ -76,16 +87,14 @@ def textrank_summarization(text: str, compression_ratio: int) -> str:
                 similarity = len(set(sent1) & set(sent2))
                 if similarity > 0:  # Only add edge if there's similarity
                     graph.add_edge(i, j, weight=similarity)
-    
+
     # Check if graph has edges for PageRank
     if graph.number_of_edges() == 0:
         # Fallback to position-based if no connections
-        num_sentences = max(1, len(sentences) * compression_ratio // 100)
         return " ".join(sentences[:num_sentences])
-    
+
     pagerank_scores = nx.pagerank(graph)
     ranked_sentences = sorted(graph.nodes, key=lambda n: pagerank_scores[n], reverse=True)
-    num_sentences = max(1, len(sentences) * compression_ratio // 100)
     return " ".join([sentences[i] for i in ranked_sentences[:num_sentences]])
 
 def position_based_summarization(text: str, compression_ratio: int) -> str:
@@ -94,6 +103,8 @@ def position_based_summarization(text: str, compression_ratio: int) -> str:
     """
     sentences = sent_tokenize(text)
     num_sentences = max(1, len(sentences) * compression_ratio // 100)
+    if num_sentences >= len(sentences):
+        return " ".join(sentences)
     return " ".join(sentences[:num_sentences])
 
 def hugging_face_summarization(text: str, summary_length: str) -> str:
@@ -103,10 +114,17 @@ def hugging_face_summarization(text: str, summary_length: str) -> str:
     # Check if text is too short for summarization
     if len(text.split()) < 30:
         return text
-    
-    max_length = {"Short": 50, "Medium": 100, "Long": 200}.get(summary_length, 100)
-    min_length = min(30, max_length // 3)  # Ensure min_length is not too high
-    
+
+    if summary_length == "Short":
+        min_length = 30
+        max_length = 80
+    elif summary_length == "Long":
+        min_length = 100
+        max_length = 250
+    else:  # Medium
+        min_length = 50
+        max_length = 150
+
     try:
         summary = hugging_face_summarizer(text, max_length=max_length, min_length=min_length, do_sample=False)
         return summary[0]["summary_text"]
@@ -125,7 +143,7 @@ def extract_content_from_url(url: str) -> str:
         response = requests.get(url, timeout=10)
         response.raise_for_status()
         soup = BeautifulSoup(response.content, "html.parser")
-        
+
         # Try to find main content areas first
         content_areas = soup.find_all(['article', 'main', 'div'], class_=['content', 'article', 'post', 'main'])
         if content_areas:
@@ -134,12 +152,12 @@ def extract_content_from_url(url: str) -> str:
                 paragraphs.extend(area.find_all("p"))
         else:
             paragraphs = soup.find_all("p")
-        
+
         content = " ".join([p.get_text().strip() for p in paragraphs if p.get_text().strip()])
-        
+
         if not content:
             raise ValueError("No readable content found on the webpage")
-        
+
         return content
     except requests.exceptions.RequestException as e:
         raise ValueError(f"Failed to fetch URL: {str(e)}")

@@ -56,7 +56,7 @@ async def summarize_url_endpoint(payload: SummarizeURLRequest):
     Extract content from the given URL and summarize it.
     """
     try:
-        content = extract_content_from_url(payload.url)
+        content = extract_content_from_url(str(payload.url))
         summary = summarize_text(
             content,
             payload.algorithm,
