@@ -56,7 +56,7 @@ A modern web application for text summarization using various Natural Language P
 1. Navigate to the backend directory:
    ```bash
    cd backend
-````
+   ```
 
 2.  Create a virtual environment:
 
