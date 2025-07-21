@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-
-"""
-Simple test script to verify all summarization algorithms work correctly.
-"""
-
 import requests
 import json
 
